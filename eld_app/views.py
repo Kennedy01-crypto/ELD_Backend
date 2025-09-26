@@ -18,7 +18,7 @@ from .serializers import (
 )
 from .hos_engine import HOSEngine
 from .map_service import OpenStreetMapService, RouteOptimizer
-from .tasks import calculate_route_task, generate_daily_log_pdf_task
+from .background_tasks import background_tasks
 
 logger = logging.getLogger(__name__)
 
@@ -154,7 +154,7 @@ class TripViewSet(viewsets.ModelViewSet):
             )
             
             # Start route calculation task
-            calculate_route_task.delay(trip.id)
+            background_tasks.calculate_route_async(trip.id)
             
             return Response(TripSerializer(trip).data, status=status.HTTP_201_CREATED)
         
@@ -166,7 +166,7 @@ class TripViewSet(viewsets.ModelViewSet):
         trip = self.get_object()
         
         # Start route calculation task
-        calculate_route_task.delay(trip.id)
+        background_tasks.calculate_route_async(trip.id)
         
         return Response({'status': 'Route calculation started'})
     
@@ -354,7 +354,7 @@ class DailyLogViewSet(viewsets.ModelViewSet):
         daily_log = self.get_object()
         
         # Start PDF generation task
-        generate_daily_log_pdf_task.delay(daily_log.id)
+        background_tasks.generate_pdf_async(daily_log.id)
         
         return Response({'status': 'PDF generation started'})
     

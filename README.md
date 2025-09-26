@@ -25,7 +25,7 @@ A comprehensive Django REST API backend for Electronic Logging Device (ELD) syst
 
 - **Backend**: Django 4.2.7, Django REST Framework
 - **Database**: SQLite (development), PostgreSQL (production)
-- **Task Queue**: Celery with Redis
+- **Background Tasks**: Django threading (no external dependencies)
 - **Maps**: OpenStreetMap (Nominatim, OSRM)
 - **PDF Generation**: ReportLab
 - **Deployment**: Gunicorn, WhiteNoise
@@ -35,7 +35,6 @@ A comprehensive Django REST API backend for Electronic Logging Device (ELD) syst
 ### Prerequisites
 
 - Python 3.11+
-- Redis server
 - Git
 
 ### Local Development Setup
@@ -63,7 +62,6 @@ A comprehensive Django REST API backend for Electronic Logging Device (ELD) syst
    SECRET_KEY=your-secret-key-here
    DEBUG=True
    DATABASE_URL=sqlite:///db.sqlite3
-   REDIS_URL=redis://localhost:6379/0
    ```
 
 5. **Run database migrations**
@@ -81,25 +79,15 @@ A comprehensive Django REST API backend for Electronic Logging Device (ELD) syst
    python manage.py create_sample_data
    ```
 
-8. **Start Redis server**
+8. **Start Django development server**
    ```bash
-   redis-server
+   python manage.py runserver
    ```
 
-9. **Start Celery worker (in separate terminal)**
+9. **Start periodic tasks (optional, in separate terminal)**
    ```bash
-   celery -A eld_backend worker --loglevel=info
+   python manage.py run_periodic_tasks
    ```
-
-10. **Start Celery beat (in separate terminal)**
-    ```bash
-    celery -A eld_backend beat --loglevel=info
-    ```
-
-11. **Start Django development server**
-    ```bash
-    python manage.py runserver
-    ```
 
 The API will be available at `http://localhost:8000/api/`
 
@@ -297,8 +285,7 @@ curl -X POST http://localhost:8000/api/daily-logs/1/generate_pdf/
 3. **Start Services**
    ```bash
    gunicorn eld_backend.wsgi:application
-   celery -A eld_backend worker --loglevel=info
-   celery -A eld_backend beat --loglevel=info
+   python manage.py run_periodic_tasks
    ```
 
 ### Heroku Deployment
@@ -314,7 +301,6 @@ curl -X POST http://localhost:8000/api/daily-logs/1/generate_pdf/
    heroku config:set SECRET_KEY=your-secret-key
    heroku config:set DEBUG=False
    heroku addons:create heroku-postgresql:hobby-dev
-   heroku addons:create heroku-redis:hobby-dev
    ```
 
 4. **Deploy**
