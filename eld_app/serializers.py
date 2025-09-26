@@ -28,6 +28,39 @@ class DriverSerializer(serializers.ModelSerializer):
         return hos_engine.calculate_available_driving_hours(obj)
 
 
+class DriverCreateSerializer(serializers.ModelSerializer):
+    """Simplified driver creation serializer for test UI"""
+    name = serializers.CharField(write_only=True)
+    license_number = serializers.CharField(write_only=True)
+    license_state = serializers.CharField(write_only=True)
+    
+    class Meta:
+        model = Driver
+        fields = ['name', 'license_number', 'license_state']
+    
+    def create(self, validated_data):
+        from django.contrib.auth.models import User
+        
+        # Create user first
+        user = User.objects.create_user(
+            username=validated_data['license_number'],
+            first_name=validated_data['name'].split()[0] if ' ' in validated_data['name'] else validated_data['name'],
+            last_name=validated_data['name'].split()[-1] if ' ' in validated_data['name'] else '',
+            email=f"{validated_data['license_number']}@example.com"
+        )
+        
+        # Create driver with default values
+        driver = Driver.objects.create(
+            user=user,
+            driver_id=validated_data['license_number'],
+            home_terminal_address="Default Terminal Address",
+            carrier_name="Default Carrier",
+            carrier_address="Default Carrier Address"
+        )
+        
+        return driver
+
+
 class DutyStatusSerializer(serializers.ModelSerializer):
     """Duty status serializer"""
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -191,4 +224,20 @@ class GeocodeSerializer(serializers.Serializer):
     def validate_address(self, value):
         if not value.strip():
             raise serializers.ValidationError("Address cannot be empty")
+        return value.strip()
+
+
+class SimpleRouteCalculationSerializer(serializers.Serializer):
+    """Simplified route calculation serializer for UI"""
+    origin = serializers.CharField(max_length=500)
+    destination = serializers.CharField(max_length=500)
+    
+    def validate_origin(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Origin cannot be empty")
+        return value.strip()
+    
+    def validate_destination(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Destination cannot be empty")
         return value.strip()

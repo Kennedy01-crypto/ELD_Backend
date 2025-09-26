@@ -14,9 +14,9 @@ import logging
 
 from .models import Driver, Trip, DutyStatus, DailyLog, RouteSegment, FuelStop, HOSViolation
 from .serializers import (
-    DriverSerializer, TripSerializer, DutyStatusSerializer, DailyLogSerializer,
+    DriverSerializer, DriverCreateSerializer, TripSerializer, DutyStatusSerializer, DailyLogSerializer,
     HOSViolationSerializer, TripCreateSerializer, DutyStatusChangeSerializer,
-    RouteCalculationSerializer, GeocodeSerializer
+    RouteCalculationSerializer, SimpleRouteCalculationSerializer, GeocodeSerializer
 )
 from .hos_engine import HOSEngine
 from .map_service import OpenStreetMapService, RouteOptimizer
@@ -29,6 +29,11 @@ class DriverViewSet(viewsets.ModelViewSet):
     """Driver management"""
     queryset = Driver.objects.all()
     serializer_class = DriverSerializer
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return DriverCreateSerializer
+        return DriverSerializer
     
     @action(detail=True, methods=['get'])
     def hos_status(self, request, pk=None):
@@ -51,8 +56,7 @@ class DriverViewSet(viewsets.ModelViewSet):
                 driver=driver,
                 new_status=serializer.validated_data['status'],
                 timestamp=timezone.now(),
-                location=serializer.validated_data['location'],
-                coordinates=serializer.validated_data.get('coordinates')
+                location=serializer.validated_data['location']
             )
             
             if validation['valid']:
@@ -89,6 +93,11 @@ class DriverViewSet(viewsets.ModelViewSet):
                 }, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def update_duty_status(self, request, pk=None):
+        """Update driver's duty status (alias for change_duty_status)"""
+        return self.change_duty_status(request, pk)
     
     @action(detail=True, methods=['get'])
     def daily_logs(self, request, pk=None):
@@ -338,22 +347,31 @@ class RouteCalculationView(APIView):
     
     def post(self, request):
         """Calculate route between two points"""
-        serializer = RouteCalculationSerializer(data=request.data)
+        serializer = SimpleRouteCalculationSerializer(data=request.data)
         
         if serializer.is_valid():
             map_service = OpenStreetMapService()
             
-            # Parse coordinates
-            origin_lat, origin_lng = serializer.validated_data['origin_coordinates'].split(',')
-            dest_lat, dest_lng = serializer.validated_data['destination_coordinates'].split(',')
+            # First geocode the addresses to get coordinates
+            origin_coords = map_service.geocode_address(serializer.validated_data['origin'])
+            destination_coords = map_service.geocode_address(serializer.validated_data['destination'])
             
-            origin = (float(origin_lat), float(origin_lng))
-            destination = (float(dest_lat), float(dest_lng))
+            if not origin_coords or not destination_coords:
+                return Response(
+                    {'error': 'Could not geocode one or both addresses'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            # Calculate route
+            # Calculate route using coordinates
+            origin = (float(origin_coords['lat']), float(origin_coords['lng']))
+            destination = (float(destination_coords['lat']), float(destination_coords['lng']))
+            
             route = map_service.calculate_route_with_stops(origin, destination)
             
             if route:
+                # Add the original addresses to the result
+                route['origin_address'] = serializer.validated_data['origin']
+                route['destination_address'] = serializer.validated_data['destination']
                 return Response(route)
             else:
                 return Response(
@@ -444,6 +462,46 @@ class DailyLogViewSet(viewsets.ModelViewSet):
         background_tasks.generate_pdf_async(daily_log.id)
         
         return Response({'status': 'PDF generation started'})
+    
+    @action(detail=False, methods=['post'])
+    def generate_pdf(self, request):
+        """Generate PDF for daily log by driver and date"""
+        driver_id = request.data.get('driver_id')
+        date = request.data.get('date')
+        
+        if not driver_id or not date:
+            return Response(
+                {'error': 'driver_id and date are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            driver = Driver.objects.get(id=driver_id)
+            daily_log, created = DailyLog.objects.get_or_create(
+                driver=driver,
+                log_date=date,
+                defaults={
+                    'total_miles_driven': 0,
+                    'off_duty_hours': 0,
+                    'sleeper_berth_hours': 0,
+                    'driving_hours': 0,
+                    'on_duty_not_driving_hours': 0
+                }
+            )
+            
+            # Start PDF generation task
+            background_tasks.generate_pdf_async(daily_log.id)
+            
+            return Response({
+                'status': 'PDF generation started',
+                'daily_log_id': daily_log.id,
+                'created': created
+            })
+        except Driver.DoesNotExist:
+            return Response(
+                {'error': 'Driver not found'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     @action(detail=False, methods=['post'])
     def generate_for_date(self, request):
