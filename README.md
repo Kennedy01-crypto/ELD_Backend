@@ -11,6 +11,7 @@ A comprehensive Django REST API backend for Electronic Logging Device (ELD) syst
 - **Violation Detection**: Automatic detection and logging of HOS violations
 - **Multi-day Trip Support**: Handle longer trips requiring multiple daily log sheets
 - **RESTful API**: Complete API for frontend integration
+- **Test UI**: Built-in web interface for testing all backend functionalities
 
 ## HOS Regulations Implemented
 
@@ -90,6 +91,29 @@ A comprehensive Django REST API backend for Electronic Logging Device (ELD) syst
    ```
 
 The API will be available at `http://localhost:8000/api/`
+
+## 🧪 Test UI
+
+A comprehensive web interface is available for testing all backend functionalities:
+
+**Access the Test UI:** `http://localhost:8000/api/test-ui/`
+
+### Features:
+- **Driver Management** - Create and manage drivers
+- **Trip Management** - Create trips with route calculation
+- **HOS Status** - Check and update driver duty status
+- **Geocoding** - Test address geocoding and reverse geocoding
+- **Route Calculation** - Test route planning between locations
+- **Daily Logs** - View logs and generate PDF reports
+
+### How to Use:
+1. Start the Django server: `python manage.py runserver`
+2. Open your browser and navigate to: `http://localhost:8000/api/test-ui/`
+3. Use the tabbed interface to test different functionalities
+4. Fill in forms and click buttons to make API calls
+5. View responses in the formatted output areas
+
+For detailed test UI documentation, see [TEST_UI_README.md](TEST_UI_README.md)
 
 ## API Endpoints
 

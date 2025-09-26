@@ -362,6 +362,72 @@ class RouteCalculationView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ReverseGeocodeView(APIView):
+    """Reverse geocoding API"""
+    
+    def post(self, request):
+        """Reverse geocode coordinates to address"""
+        try:
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            
+            if not latitude or not longitude:
+                return Response(
+                    {'error': 'Latitude and longitude are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            map_service = OpenStreetMapService()
+            result = map_service.reverse_geocode(float(latitude), float(longitude))
+            
+            if result:
+                return Response(result)
+            else:
+                return Response(
+                    {'error': 'Could not reverse geocode coordinates'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, TypeError) as e:
+            return Response(
+                {'error': 'Invalid coordinates'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class MapTileView(APIView):
+    """Map tile API"""
+    
+    def get(self, request):
+        """Get map tile URL for given coordinates and zoom level"""
+        try:
+            lat = request.GET.get('lat')
+            lng = request.GET.get('lng')
+            zoom = request.GET.get('zoom', 10)
+            
+            if not lat or not lng:
+                return Response(
+                    {'error': 'Latitude and longitude are required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            map_service = OpenStreetMapService()
+            tile_url = map_service.get_map_tile_url(float(lat), float(lng), int(zoom))
+            
+            return Response({
+                'tile_url': tile_url,
+                'coordinates': {
+                    'latitude': float(lat),
+                    'longitude': float(lng),
+                    'zoom': int(zoom)
+                }
+            })
+        except (ValueError, TypeError) as e:
+            return Response(
+                {'error': 'Invalid parameters'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
 class DailyLogViewSet(viewsets.ModelViewSet):
     """Daily log management"""
     queryset = DailyLog.objects.all()

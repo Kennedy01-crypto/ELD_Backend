@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELD Backend Test UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #27ae60;
+        }
+
+        .status-offline {
+            background: #e74c3c;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 ELD Backend Test UI</h1>
+            <p>Test all backend functionalities and API endpoints</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('drivers')">Drivers</button>
+                <button class="tab" onclick="showTab('trips')">Trips</button>
+                <button class="tab" onclick="showTab('hos')">HOS Status</button>
+                <button class="tab" onclick="showTab('geocoding')">Geocoding</button>
+                <button class="tab" onclick="showTab('routes')">Routes</button>
+                <button class="tab" onclick="showTab('logs')">Daily Logs</button>
+            </div>
+
+            <!-- Drivers Tab -->
+            <div id="drivers" class="tab-content active">
+                <div class="section">
+                    <h2>👥 Driver Management</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Get All Drivers</h3>
+                            <button class="btn" onclick="getDrivers()">Get Drivers</button>
+                            <div id="drivers-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Create New Driver</h3>
+                            <div class="form-group">
+                                <label>Name:</label>
+                                <input type="text" id="driver-name" placeholder="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label>License Number:</label>
+                                <input type="text" id="driver-license" placeholder="D123456789">
+                            </div>
+                            <div class="form-group">
+                                <label>License State:</label>
+                                <input type="text" id="driver-state" placeholder="VA">
+                            </div>
+                            <button class="btn btn-success" onclick="createDriver()">Create Driver</button>
+                            <div id="create-driver-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trips Tab -->
+            <div id="trips" class="tab-content">
+                <div class="section">
+                    <h2>🚛 Trip Management</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Get All Trips</h3>
+                            <button class="btn" onclick="getTrips()">Get Trips</button>
+                            <div id="trips-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Create New Trip</h3>
+                            <div class="form-group">
+                                <label>Driver ID:</label>
+                                <input type="number" id="trip-driver-id" placeholder="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Origin Address:</label>
+                                <input type="text" id="trip-origin" placeholder="Richmond, VA">
+                            </div>
+                            <div class="form-group">
+                                <label>Destination Address:</label>
+                                <input type="text" id="trip-destination" placeholder="Newark, NJ">
+                            </div>
+                            <div class="form-group">
+                                <label>Planned Start Time:</label>
+                                <input type="datetime-local" id="trip-start-time">
+                            </div>
+                            <button class="btn btn-success" onclick="createTrip()">Create Trip</button>
+                            <div id="create-trip-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOS Status Tab -->
+            <div id="hos" class="tab-content">
+                <div class="section">
+                    <h2>⏰ Hours of Service Status</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Get HOS Status</h3>
+                            <div class="form-group">
+                                <label>Driver ID:</label>
+                                <input type="number" id="hos-driver-id" placeholder="1">
+                            </div>
+                            <button class="btn" onclick="getHOSStatus()">Get HOS Status</button>
+                            <div id="hos-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Update Duty Status</h3>
+                            <div class="form-group">
+                                <label>Driver ID:</label>
+                                <input type="number" id="duty-driver-id" placeholder="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Status:</label>
+                                <select id="duty-status">
+                                    <option value="OFF_DUTY">Off Duty</option>
+                                    <option value="SLEEPER_BERTH">Sleeper Berth</option>
+                                    <option value="DRIVING">Driving</option>
+                                    <option value="ON_DUTY_NOT_DRIVING">On Duty (Not Driving)</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-warning" onclick="updateDutyStatus()">Update Status</button>
+                            <div id="duty-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Geocoding Tab -->
+            <div id="geocoding" class="tab-content">
+                <div class="section">
+                    <h2>📍 Geocoding Services</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Geocode Address</h3>
+                            <div class="form-group">
+                                <label>Address:</label>
+                                <input type="text" id="geocode-address" placeholder="1600 Amphitheatre Parkway, Mountain View, CA">
+                            </div>
+                            <button class="btn" onclick="geocodeAddress()">Geocode</button>
+                            <div id="geocode-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Reverse Geocode</h3>
+                            <div class="form-group">
+                                <label>Latitude:</label>
+                                <input type="number" id="reverse-lat" placeholder="37.4221" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude:</label>
+                                <input type="number" id="reverse-lng" placeholder="-122.0841" step="any">
+                            </div>
+                            <button class="btn" onclick="reverseGeocode()">Reverse Geocode</button>
+                            <div id="reverse-geocode-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Routes Tab -->
+            <div id="routes" class="tab-content">
+                <div class="section">
+                    <h2>🗺️ Route Calculation</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Calculate Route</h3>
+                            <div class="form-group">
+                                <label>Origin Address:</label>
+                                <input type="text" id="route-origin" placeholder="Richmond, VA">
+                            </div>
+                            <div class="form-group">
+                                <label>Destination Address:</label>
+                                <input type="text" id="route-destination" placeholder="Newark, NJ">
+                            </div>
+                            <button class="btn" onclick="calculateRoute()">Calculate Route</button>
+                            <div id="route-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Get Map Tile</h3>
+                            <div class="form-group">
+                                <label>Latitude:</label>
+                                <input type="number" id="tile-lat" placeholder="37.7749" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude:</label>
+                                <input type="number" id="tile-lng" placeholder="-122.4194" step="any">
+                            </div>
+                            <div class="form-group">
+                                <label>Zoom Level:</label>
+                                <input type="number" id="tile-zoom" placeholder="10" min="1" max="18">
+                            </div>
+                            <button class="btn" onclick="getMapTile()">Get Map Tile</button>
+                            <div id="tile-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Logs Tab -->
+            <div id="logs" class="tab-content">
+                <div class="section">
+                    <h2>📋 Daily Logs</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Get Daily Logs</h3>
+                            <button class="btn" onclick="getDailyLogs()">Get Daily Logs</button>
+                            <div id="logs-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Generate PDF</h3>
+                            <div class="form-group">
+                                <label>Driver ID:</label>
+                                <input type="number" id="pdf-driver-id" placeholder="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Date:</label>
+                                <input type="date" id="pdf-date">
+                            </div>
+                            <button class="btn btn-success" onclick="generatePDF()">Generate PDF</button>
+                            <div id="pdf-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing request...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `response ${isError ? 'error' : 'success'}`;
+        }
+
+        // Driver functions
+        async function getDrivers() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/drivers/`);
+                const data = await response.json();
+                showResponse('drivers-response', data, !response.ok);
+            } catch (error) {
+                showResponse('drivers-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function createDriver() {
+            showLoading();
+            try {
+                const driverData = {
+                    name: document.getElementById('driver-name').value,
+                    license_number: document.getElementById('driver-license').value,
+                    license_state: document.getElementById('driver-state').value
+                };
+                
+                const response = await fetch(`${API_BASE}/drivers/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(driverData)
+                });
+                
+                const data = await response.json();
+                showResponse('create-driver-response', data, !response.ok);
+            } catch (error) {
+                showResponse('create-driver-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Trip functions
+        async function getTrips() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/trips/`);
+                const data = await response.json();
+                showResponse('trips-response', data, !response.ok);
+            } catch (error) {
+                showResponse('trips-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function createTrip() {
+            showLoading();
+            try {
+                const tripData = {
+                    driver_id: parseInt(document.getElementById('trip-driver-id').value),
+                    origin_address: document.getElementById('trip-origin').value,
+                    destination_address: document.getElementById('trip-destination').value,
+                    planned_start_time: document.getElementById('trip-start-time').value
+                };
+                
+                const response = await fetch(`${API_BASE}/trips/create_trip/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(tripData)
+                });
+                
+                const data = await response.json();
+                showResponse('create-trip-response', data, !response.ok);
+            } catch (error) {
+                showResponse('create-trip-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // HOS functions
+        async function getHOSStatus() {
+            showLoading();
+            try {
+                const driverId = document.getElementById('hos-driver-id').value;
+                const response = await fetch(`${API_BASE}/drivers/${driverId}/hos_status/`);
+                const data = await response.json();
+                showResponse('hos-response', data, !response.ok);
+            } catch (error) {
+                showResponse('hos-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updateDutyStatus() {
+            showLoading();
+            try {
+                const driverId = document.getElementById('duty-driver-id').value;
+                const status = document.getElementById('duty-status').value;
+                
+                const response = await fetch(`${API_BASE}/drivers/${driverId}/update_duty_status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status })
+                });
+                
+                const data = await response.json();
+                showResponse('duty-response', data, !response.ok);
+            } catch (error) {
+                showResponse('duty-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Geocoding functions
+        async function geocodeAddress() {
+            showLoading();
+            try {
+                const address = document.getElementById('geocode-address').value;
+                const response = await fetch(`${API_BASE}/geocode/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ address })
+                });
+                
+                const data = await response.json();
+                showResponse('geocode-response', data, !response.ok);
+            } catch (error) {
+                showResponse('geocode-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function reverseGeocode() {
+            showLoading();
+            try {
+                const lat = parseFloat(document.getElementById('reverse-lat').value);
+                const lng = parseFloat(document.getElementById('reverse-lng').value);
+                
+                const response = await fetch(`${API_BASE}/geocode/reverse/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ latitude: lat, longitude: lng })
+                });
+                
+                const data = await response.json();
+                showResponse('reverse-geocode-response', data, !response.ok);
+            } catch (error) {
+                showResponse('reverse-geocode-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Route functions
+        async function calculateRoute() {
+            showLoading();
+            try {
+                const origin = document.getElementById('route-origin').value;
+                const destination = document.getElementById('route-destination').value;
+                
+                const response = await fetch(`${API_BASE}/route-calculation/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ origin, destination })
+                });
+                
+                const data = await response.json();
+                showResponse('route-response', data, !response.ok);
+            } catch (error) {
+                showResponse('route-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function getMapTile() {
+            showLoading();
+            try {
+                const lat = parseFloat(document.getElementById('tile-lat').value);
+                const lng = parseFloat(document.getElementById('tile-lng').value);
+                const zoom = parseInt(document.getElementById('tile-zoom').value);
+                
+                const response = await fetch(`${API_BASE}/map-tile/?lat=${lat}&lng=${lng}&zoom=${zoom}`);
+                const data = await response.json();
+                showResponse('tile-response', data, !response.ok);
+            } catch (error) {
+                showResponse('tile-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Daily logs functions
+        async function getDailyLogs() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/daily-logs/`);
+                const data = await response.json();
+                showResponse('logs-response', data, !response.ok);
+            } catch (error) {
+                showResponse('logs-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function generatePDF() {
+            showLoading();
+            try {
+                const driverId = document.getElementById('pdf-driver-id').value;
+                const date = document.getElementById('pdf-date').value;
+                
+                const response = await fetch(`${API_BASE}/daily-logs/generate_pdf/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ driver_id: driverId, date })
+                });
+                
+                const data = await response.json();
+                showResponse('pdf-response', data, !response.ok);
+            } catch (error) {
+                showResponse('pdf-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Initialize with current date/time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('trip-start-time').value = localDateTime;
+            document.getElementById('pdf-date').value = now.toISOString().slice(0, 10);
+        });
+    </script>
+</body>
+</html>
