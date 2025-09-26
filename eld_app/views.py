@@ -110,9 +110,28 @@ class TripViewSet(viewsets.ModelViewSet):
     queryset = Trip.objects.all()
     serializer_class = TripSerializer
     
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['get', 'post'])
     def create_trip(self, request):
         """Create a new trip with route calculation"""
+        if request.method == 'GET':
+            return Response({
+                'message': 'Create Trip Endpoint',
+                'method': 'POST',
+                'required_fields': {
+                    'driver_id': 'integer - ID of the driver',
+                    'origin_address': 'string - Starting location',
+                    'destination_address': 'string - Destination location',
+                    'planned_start_time': 'string - ISO datetime format'
+                },
+                'example': {
+                    'driver_id': 1,
+                    'origin_address': 'Richmond, VA',
+                    'destination_address': 'Newark, NJ',
+                    'planned_start_time': '2024-01-15T06:00:00Z'
+                }
+            })
+        
+        # POST method implementation
         serializer = TripCreateSerializer(data=request.data)
         
         if serializer.is_valid():
