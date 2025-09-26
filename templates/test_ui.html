@@ -453,6 +453,56 @@
 
     <script>
         const API_BASE = 'http://127.0.0.1:8000/api';
+        let csrfToken = null;
+        let isAuthenticated = false;
+
+        // Check authentication status on page load
+        window.addEventListener('load', async function() {
+            await checkAuthStatus();
+        });
+
+        async function checkAuthStatus() {
+            try {
+                const session = localStorage.getItem('eld_session');
+                if (session) {
+                    const sessionData = JSON.parse(session);
+                    if (sessionData.success) {
+                        isAuthenticated = true;
+                        await getCSRFToken();
+                        showAuthStatus('Authenticated as: ' + sessionData.user.username);
+                    }
+                }
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        }
+
+        async function getCSRFToken() {
+            try {
+                const response = await fetch(`${API_BASE}/csrf-token/`);
+                const data = await response.json();
+                if (response.ok) {
+                    csrfToken = data.csrf_token;
+                }
+            } catch (error) {
+                console.log('Could not get CSRF token');
+            }
+        }
+
+        function showAuthStatus(message) {
+            const header = document.querySelector('.header p');
+            header.innerHTML = message + ' | <a href="/api/admin-login/" style="color: #fff;">Login</a>';
+        }
+
+        function getHeaders() {
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+            return headers;
+        }
 
         function showTab(tabName) {
             // Hide all tab contents
@@ -509,11 +559,14 @@
                     license_state: document.getElementById('driver-state').value
                 };
                 
+                if (!driverData.name || !driverData.license_number || !driverData.license_state) {
+                    showResponse('create-driver-response', { error: 'All fields are required' }, true);
+                    return;
+                }
+                
                 const response = await fetch(`${API_BASE}/drivers/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify(driverData)
                 });
                 
@@ -543,18 +596,27 @@
         async function createTrip() {
             showLoading();
             try {
+                const driverId = parseInt(document.getElementById('trip-driver-id').value);
+                if (!driverId || isNaN(driverId)) {
+                    showResponse('create-trip-response', { error: 'Valid Driver ID is required' }, true);
+                    return;
+                }
+                
                 const tripData = {
-                    driver_id: parseInt(document.getElementById('trip-driver-id').value),
+                    driver_id: driverId,
                     origin_address: document.getElementById('trip-origin').value,
                     destination_address: document.getElementById('trip-destination').value,
                     planned_start_time: document.getElementById('trip-start-time').value
                 };
                 
+                if (!tripData.origin_address || !tripData.destination_address || !tripData.planned_start_time) {
+                    showResponse('create-trip-response', { error: 'All fields are required' }, true);
+                    return;
+                }
+                
                 const response = await fetch(`${API_BASE}/trips/create_trip/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify(tripData)
                 });
                 
@@ -572,6 +634,10 @@
             showLoading();
             try {
                 const driverId = document.getElementById('hos-driver-id').value;
+                if (!driverId) {
+                    showResponse('hos-response', { error: 'Driver ID is required' }, true);
+                    return;
+                }
                 const response = await fetch(`${API_BASE}/drivers/${driverId}/hos_status/`);
                 const data = await response.json();
                 showResponse('hos-response', data, !response.ok);
@@ -586,13 +652,15 @@
             showLoading();
             try {
                 const driverId = document.getElementById('duty-driver-id').value;
+                if (!driverId) {
+                    showResponse('duty-response', { error: 'Driver ID is required' }, true);
+                    return;
+                }
                 const status = document.getElementById('duty-status').value;
                 
                 const response = await fetch(`${API_BASE}/drivers/${driverId}/update_duty_status/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify({ status })
                 });
                 
@@ -612,9 +680,7 @@
                 const address = document.getElementById('geocode-address').value;
                 const response = await fetch(`${API_BASE}/geocode/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify({ address })
                 });
                 
@@ -635,9 +701,7 @@
                 
                 const response = await fetch(`${API_BASE}/geocode/reverse/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify({ latitude: lat, longitude: lng })
                 });
                 
@@ -659,9 +723,7 @@
                 
                 const response = await fetch(`${API_BASE}/route-calculation/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify({ origin, destination })
                 });
                 
@@ -680,6 +742,11 @@
                 const lat = parseFloat(document.getElementById('tile-lat').value);
                 const lng = parseFloat(document.getElementById('tile-lng').value);
                 const zoom = parseInt(document.getElementById('tile-zoom').value);
+                
+                if (isNaN(lat) || isNaN(lng) || isNaN(zoom)) {
+                    showResponse('tile-response', { error: 'Invalid coordinates or zoom level' }, true);
+                    return;
+                }
                 
                 const response = await fetch(`${API_BASE}/map-tile/?lat=${lat}&lng=${lng}&zoom=${zoom}`);
                 const data = await response.json();
@@ -713,9 +780,7 @@
                 
                 const response = await fetch(`${API_BASE}/daily-logs/generate_pdf/`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: getHeaders(),
                     body: JSON.stringify({ driver_id: driverId, date })
                 });
                 

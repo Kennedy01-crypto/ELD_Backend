@@ -19,5 +19,8 @@ urlpatterns = [
     path('route-calculation/', views.RouteCalculationView.as_view(), name='route-calculation'),
     path('map-tile/', views.MapTileView.as_view(), name='map_tile'),
     path('test-ui/', test_views.test_ui, name='test_ui'),
+    path('admin-login/', test_views.admin_login, name='admin_login'),
+    path('admin/login/', test_views.admin_login_api, name='admin_login_api'),
+    path('csrf-token/', test_views.csrf_token, name='csrf_token'),
     path('status/', test_views.api_status, name='api_status'),
 ]
