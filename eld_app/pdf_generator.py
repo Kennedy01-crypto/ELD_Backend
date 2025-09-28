@@ -34,30 +34,34 @@ class DailyLogPDFGenerator:
     
     def _setup_custom_styles(self):
         """Setup custom paragraph styles"""
-        self.styles.add(ParagraphStyle(
-            name='Title',
-            parent=self.styles['Heading1'],
-            fontSize=16,
-            spaceAfter=12,
-            alignment=TA_CENTER,
-            textColor=colors.blue
-        ))
+        # Check if style already exists before adding
+        if 'Title' not in self.styles:
+            self.styles.add(ParagraphStyle(
+                name='Title',
+                parent=self.styles['Heading1'],
+                fontSize=16,
+                spaceAfter=12,
+                alignment=TA_CENTER,
+                textColor=colors.blue
+            ))
         
-        self.styles.add(ParagraphStyle(
-            name='Header',
-            parent=self.styles['Normal'],
-            fontSize=10,
-            spaceAfter=6,
-            alignment=TA_LEFT
-        ))
+        if 'Header' not in self.styles:
+            self.styles.add(ParagraphStyle(
+                name='Header',
+                parent=self.styles['Normal'],
+                fontSize=10,
+                spaceAfter=6,
+                alignment=TA_LEFT
+            ))
         
-        self.styles.add(ParagraphStyle(
-            name='Small',
-            parent=self.styles['Normal'],
-            fontSize=8,
-            spaceAfter=3,
-            alignment=TA_LEFT
-        ))
+        if 'Small' not in self.styles:
+            self.styles.add(ParagraphStyle(
+                name='Small',
+                parent=self.styles['Normal'],
+                fontSize=8,
+                spaceAfter=3,
+                alignment=TA_LEFT
+            ))
     
     def generate_daily_log_pdf(self, daily_log, duty_statuses=None):
         """Generate PDF for daily log"""

@@ -7,7 +7,7 @@ import logging
 from django.conf import settings
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import Trip, RouteSegment, FuelStop, DailyLog, Driver, HOSViolation
+from .models import Trip, RouteSegment, FuelStop, DailyLog, Driver, HOSViolation, DutyStatus
 from .map_service import OpenStreetMapService, RouteOptimizer
 from .hos_engine import HOSEngine
 from .pdf_generator import DailyLogPDFGenerator, MultiDayLogPDFGenerator

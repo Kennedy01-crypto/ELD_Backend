@@ -5,12 +5,56 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, login
 from django.middleware.csrf import get_token
 from django.contrib.auth.models import User
+from .models import Driver
 import json
 
 
 def test_ui(request):
     """Serve the test UI for backend functionality testing"""
     return render(request, 'test_ui.html')
+
+
+def driver_ui(request):
+    """Serve the driver UI for driver-specific functionality"""
+    return render(request, 'driver_ui.html')
+
+def driver_login(request):
+    """Serve the driver login page"""
+    return render(request, 'driver_login.html')
+
+def driver_login_api(request):
+    """Handle driver login API"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            driver_id = data.get('driver_id')
+            license_number = data.get('license_number')
+            
+            if not driver_id or not license_number:
+                return JsonResponse({'error': 'Driver ID and License Number are required'}, status=400)
+            
+            # Find driver by ID and verify license number
+            try:
+                driver = Driver.objects.get(driver_id=driver_id, license_number=license_number)
+                return JsonResponse({
+                    'success': True,
+                    'driver': {
+                        'id': driver.id,
+                        'name': driver.user.get_full_name() or driver.user.username,
+                        'driver_id': driver.driver_id,
+                        'license_number': driver.license_number,
+                        'license_state': driver.license_state
+                    }
+                })
+            except Driver.DoesNotExist:
+                return JsonResponse({'error': 'Invalid driver credentials'}, status=401)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 def admin_login(request):

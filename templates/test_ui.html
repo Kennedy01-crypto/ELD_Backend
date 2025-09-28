@@ -397,6 +397,15 @@
                             <div id="route-response" class="response"></div>
                         </div>
                         <div class="card">
+                            <h3>Visual Map Display</h3>
+                            <div id="map-container" style="width: 100%; height: 400px; border: 2px solid #ddd; border-radius: 8px; margin-top: 10px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6c757d;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 48px; margin-bottom: 10px;">🗺️</div>
+                                    <div>Map will appear here after calculating a route</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
                             <h3>Get Map Tile</h3>
                             <div class="form-group">
                                 <label>Latitude:</label>
@@ -721,6 +730,11 @@
                 const origin = document.getElementById('route-origin').value;
                 const destination = document.getElementById('route-destination').value;
                 
+                if (!origin || !destination) {
+                    showResponse('route-response', { error: 'Both origin and destination are required' }, true);
+                    return;
+                }
+                
                 const response = await fetch(`${API_BASE}/route-calculation/`, {
                     method: 'POST',
                     headers: getHeaders(),
@@ -729,11 +743,110 @@
                 
                 const data = await response.json();
                 showResponse('route-response', data, !response.ok);
+                
+                // Display visual map with red route line
+                if (response.ok && data.geometry) {
+                    displayRouteOnMap(data);
+                }
             } catch (error) {
                 showResponse('route-response', { error: error.message }, true);
             } finally {
                 hideLoading();
             }
+        }
+        
+        function displayRouteOnMap(routeData) {
+            const mapContainer = document.getElementById('map-container');
+            
+            // Extract coordinates from the route geometry
+            const coordinates = routeData.geometry.coordinates;
+            if (!coordinates || coordinates.length < 2) {
+                mapContainer.innerHTML = '<div style="text-align: center; color: #dc3545;">No route coordinates available</div>';
+                return;
+            }
+            
+            // Calculate bounds
+            let minLat = Math.min(...coordinates.map(coord => coord[1]));
+            let maxLat = Math.max(...coordinates.map(coord => coord[1]));
+            let minLng = Math.min(...coordinates.map(coord => coord[0]));
+            let maxLng = Math.max(...coordinates.map(coord => coord[0]));
+            
+            // Add padding
+            const latPadding = (maxLat - minLat) * 0.1;
+            const lngPadding = (maxLng - minLng) * 0.1;
+            minLat -= latPadding;
+            maxLat += latPadding;
+            minLng -= lngPadding;
+            maxLng += lngPadding;
+            
+            // Calculate center
+            const centerLat = (minLat + maxLat) / 2;
+            const centerLng = (minLng + maxLng) / 2;
+            
+            // Create map display using SVG
+            const mapHtml = `
+                <div style="position: relative; width: 100%; height: 100%;">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #e8f4fd; border-radius: 8px; overflow: hidden;">
+                        <div style="position: relative; width: 100%; height: 100%;">
+                            <!-- Map background -->
+                            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(45deg, #f0f8ff 25%, transparent 25%), linear-gradient(-45deg, #f0f8ff 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f8ff 75%), linear-gradient(-45deg, transparent 75%, #f0f8ff 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px;"></div>
+                            
+                            <!-- Route line -->
+                            <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;">
+                                <polyline 
+                                    points="${coordinates.map(coord => {
+                                        const x = ((coord[0] - minLng) / (maxLng - minLng)) * 100;
+                                        const y = ((maxLat - coord[1]) / (maxLat - minLat)) * 100;
+                                        return `${x}%,${y}%`;
+                                    }).join(' ')}"
+                                    stroke="#FF0000"
+                                    stroke-width="4"
+                                    stroke-opacity="0.8"
+                                    fill="none"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                                
+                                <!-- Start point -->
+                                <circle 
+                                    cx="${((coordinates[0][0] - minLng) / (maxLng - minLng)) * 100}%" 
+                                    cy="${((maxLat - coordinates[0][1]) / (maxLat - minLat)) * 100}%" 
+                                    r="8" 
+                                    fill="#28a745" 
+                                    stroke="#fff" 
+                                    stroke-width="2"
+                                />
+                                
+                                <!-- End point -->
+                                <circle 
+                                    cx="${((coordinates[coordinates.length-1][0] - minLng) / (maxLng - minLng)) * 100}%" 
+                                    cy="${((maxLat - coordinates[coordinates.length-1][1]) / (maxLat - minLat)) * 100}%" 
+                                    r="8" 
+                                    fill="#dc3545" 
+                                    stroke="#fff" 
+                                    stroke-width="2"
+                                />
+                            </svg>
+                            
+                            <!-- Route info overlay -->
+                            <div style="position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; font-size: 12px; z-index: 3;">
+                                <div><strong>Distance:</strong> ${(routeData.distance_meters / 1000).toFixed(1)} km</div>
+                                <div><strong>Duration:</strong> ${Math.round(routeData.duration_seconds / 3600)}h ${Math.round((routeData.duration_seconds % 3600) / 60)}m</div>
+                                <div><strong>Style:</strong> <span style="color: #FF0000;">●</span> Red Line</div>
+                            </div>
+                            
+                            <!-- Legend -->
+                            <div style="position: absolute; bottom: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; font-size: 12px; z-index: 3;">
+                                <div><span style="color: #28a745;">●</span> Start</div>
+                                <div><span style="color: #dc3545;">●</span> End</div>
+                                <div><span style="color: #FF0000;">━━━</span> Route</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            mapContainer.innerHTML = mapHtml;
         }
 
         async function getMapTile() {

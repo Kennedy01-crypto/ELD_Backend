@@ -219,10 +219,10 @@ class RouteCalculationSerializer(serializers.Serializer):
 
 class GeocodeSerializer(serializers.Serializer):
     """Serializer for geocoding requests"""
-    address = serializers.CharField(max_length=500)
+    address = serializers.CharField(max_length=500, allow_blank=False)
     
     def validate_address(self, value):
-        if not value.strip():
+        if not value or not value.strip():
             raise serializers.ValidationError("Address cannot be empty")
         return value.strip()
 

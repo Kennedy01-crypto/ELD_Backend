@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELD Driver Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .driver-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .driver-info h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .driver-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 18px;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .response.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #27ae60;
+        }
+
+        .status-offline {
+            background: #e74c3c;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .hos-status {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .hos-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .hos-metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .metric-value {
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+
+        .metric-value.warning {
+            color: #f39c12;
+        }
+
+        .metric-value.danger {
+            color: #e74c3c;
+        }
+
+        .current-trip {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .trip-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .trip-status.planned {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .trip-status.in_progress {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .trip-status.completed {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .trip-status.cancelled {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/api/admin-login/" class="logout-btn">Logout</a>
+            <h1>🚛 Driver Dashboard</h1>
+            <p>Manage your trips, duty status, and HOS compliance</p>
+        </div>
+
+        <div class="driver-info">
+            <h3>Driver Information</h3>
+            <div class="driver-details">
+                <div class="detail-item">
+                    <div class="detail-label">Driver ID</div>
+                    <div class="detail-value" id="driver-id">Loading...</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Name</div>
+                    <div class="detail-value" id="driver-name">Loading...</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Current Status</div>
+                    <div class="detail-value" id="current-status">Loading...</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">HOS Rule</div>
+                    <div class="detail-value" id="hos-rule">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
+                <button class="tab" onclick="showTab('duty')">Duty Status</button>
+                <button class="tab" onclick="showTab('trips')">Trips</button>
+                <button class="tab" onclick="showTab('logs')">Daily Logs</button>
+                <button class="tab" onclick="showTab('map')">Map & Routes</button>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="section">
+                    <h2>📊 Current HOS Status</h2>
+                    <div class="hos-status" id="hos-status">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading HOS status...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>🚛 Current Trip</h2>
+                    <div class="current-trip" id="current-trip">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading current trip...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Duty Status Tab -->
+            <div id="duty" class="tab-content">
+                <div class="section">
+                    <h2>⏰ Update Duty Status</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Change Duty Status</h3>
+                            <div class="form-group">
+                                <label>New Status:</label>
+                                <select id="duty-status">
+                                    <option value="off_duty">Off Duty</option>
+                                    <option value="sleeper_berth">Sleeper Berth</option>
+                                    <option value="driving">Driving</option>
+                                    <option value="on_duty_not_driving">On Duty (Not Driving)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Location:</label>
+                                <input type="text" id="duty-location" placeholder="Current location">
+                            </div>
+                            <div class="form-group">
+                                <label>Remarks (Optional):</label>
+                                <textarea id="duty-remarks" placeholder="Additional notes"></textarea>
+                            </div>
+                            <button class="btn btn-large" onclick="updateDutyStatus()">Update Status</button>
+                            <div id="duty-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Current Status</h3>
+                            <div id="current-duty-status">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <p>Loading current status...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trips Tab -->
+            <div id="trips" class="tab-content">
+                <div class="section">
+                    <h2>🚛 Trip Management</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>My Trips</h3>
+                            <button class="btn" onclick="getMyTrips()">Refresh Trips</button>
+                            <div id="trips-response" class="response"></div>
+                            
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e1e8ed;">
+                                <h4>Update Trip Status</h4>
+                                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                    <select id="trip-id" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <option value="">Select a trip...</option>
+                                    </select>
+                                    <select id="trip-status" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <option value="planned">Planned</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                    <button class="btn" onclick="updateTripStatus()" style="flex: 1;">Update Status</button>
+                                </div>
+                                <div id="trip-update-response" class="response"></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>Start New Trip</h3>
+                            <div class="form-group">
+                                <label>Origin Address:</label>
+                                <input type="text" id="trip-origin" placeholder="Starting location">
+                            </div>
+                            <div class="form-group">
+                                <label>Destination Address:</label>
+                                <input type="text" id="trip-destination" placeholder="Destination location">
+                            </div>
+                            <div class="form-group">
+                                <label>Planned Start Time:</label>
+                                <input type="datetime-local" id="trip-start-time">
+                            </div>
+                            <button class="btn btn-success" onclick="createTrip()">Create Trip</button>
+                            <div id="create-trip-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Logs Tab -->
+            <div id="logs" class="tab-content">
+                <div class="section">
+                    <h2>📋 Daily Logs</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>My Daily Logs</h3>
+                            <button class="btn" onclick="getMyLogs()">Refresh Logs</button>
+                            <div id="logs-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Generate PDF</h3>
+                            <div class="form-group">
+                                <label>Date:</label>
+                                <input type="date" id="pdf-date">
+                            </div>
+                            <button class="btn btn-success" onclick="generatePDF()">Generate PDF</button>
+                            <div id="pdf-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map & Routes Tab -->
+            <div id="map" class="tab-content">
+                <div class="section">
+                    <h2>🗺️ Map & Route Planning</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Calculate Route</h3>
+                            <div class="form-group">
+                                <label>From:</label>
+                                <input type="text" id="route-origin" placeholder="Starting location">
+                            </div>
+                            <div class="form-group">
+                                <label>To:</label>
+                                <input type="text" id="route-destination" placeholder="Destination location">
+                            </div>
+                            <button class="btn" onclick="calculateRoute()">Calculate Route</button>
+                            <div id="route-response" class="response"></div>
+                        </div>
+                        <div class="card">
+                            <h3>Geocode Address</h3>
+                            <div class="form-group">
+                                <label>Address:</label>
+                                <input type="text" id="geocode-address" placeholder="Enter address">
+                            </div>
+                            <button class="btn" onclick="geocodeAddress()">Get Coordinates</button>
+                            <div id="geocode-response" class="response"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing request...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let csrfToken = null;
+        let currentDriverId = null;
+        let driverInfo = null;
+
+        // Check authentication status on page load
+        window.addEventListener('load', async function() {
+            await checkAuthStatus();
+            if (currentDriverId) {
+                updateDriverInfo();
+                loadDriverData();
+            } else {
+                showLoginPrompt();
+            }
+        });
+
+        async function checkAuthStatus() {
+            // Check if driver info is stored in localStorage
+            const storedDriverInfo = localStorage.getItem('driverInfo');
+            if (storedDriverInfo) {
+                try {
+                    driverInfo = JSON.parse(storedDriverInfo);
+                    currentDriverId = driverInfo.id;
+                } catch (e) {
+                    console.error('Error parsing stored driver info:', e);
+                    localStorage.removeItem('driverInfo');
+                }
+            }
+        }
+
+        function showLoginPrompt() {
+            const container = document.querySelector('.container');
+            container.innerHTML = `
+                <div class="header">
+                    <h1>🚛 ELD Driver Dashboard</h1>
+                    <p>Please log in to access your dashboard</p>
+                </div>
+                <div class="login-prompt">
+                    <h2>Driver Authentication Required</h2>
+                    <p>You need to log in to access your driver dashboard.</p>
+                    <a href="/api/driver-login/">Login as Driver</a>
+                    <a href="/api/admin-login/">Admin Login</a>
+                </div>
+            `;
+        }
+
+        function updateDriverInfo() {
+            if (driverInfo) {
+                // Update driver ID
+                const driverIdElement = document.querySelector('.driver-info .info-item:nth-child(1) .info-value');
+                if (driverIdElement) {
+                    driverIdElement.textContent = driverInfo.driver_id || 'Loading...';
+                }
+                
+                // Update driver name
+                const nameElement = document.querySelector('.driver-info .info-item:nth-child(2) .info-value');
+                if (nameElement) {
+                    nameElement.textContent = driverInfo.name || 'Loading...';
+                }
+                
+                // Update HOS rule
+                const hosRuleElement = document.querySelector('.driver-info .info-item:nth-child(4) .info-value');
+                if (hosRuleElement) {
+                    hosRuleElement.textContent = '70 hours/8 days'; // Default HOS rule
+                }
+            }
+        }
+
+        async function loadDriverData() {
+            if (currentDriverId) {
+                await getDriverHOS();
+                await getDriverTrips();
+                await getDriverDailyLogs();
+            }
+        }
+
+        async function checkAuthStatus() {
+            try {
+                const session = localStorage.getItem('eld_session');
+                if (session) {
+                    const sessionData = JSON.parse(session);
+                    if (sessionData.success) {
+                        await getCSRFToken();
+                        // For demo purposes, assume driver ID 1
+                        currentDriverId = 1;
+                        return true;
+                    }
+                }
+                // Redirect to login if not authenticated
+                window.location.href = '/api/admin-login/';
+            } catch (error) {
+                console.log('Not authenticated');
+                window.location.href = '/api/admin-login/';
+            }
+        }
+
+        async function getCSRFToken() {
+            try {
+                const response = await fetch(`${API_BASE}/csrf-token/`);
+                const data = await response.json();
+                if (response.ok) {
+                    csrfToken = data.csrf_token;
+                }
+            } catch (error) {
+                console.log('Could not get CSRF token');
+            }
+        }
+
+        function getHeaders() {
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+            if (csrfToken) {
+                headers['X-CSRFToken'] = csrfToken;
+            }
+            return headers;
+        }
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `response ${isError ? 'error' : 'success'}`;
+        }
+
+        async function loadDriverInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/drivers/${currentDriverId}/`);
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('driver-id').textContent = data.driver_id;
+                    document.getElementById('driver-name').textContent = data.full_name;
+                    document.getElementById('hos-rule').textContent = data.hos_rule_type.replace('_', '/');
+                }
+            } catch (error) {
+                console.error('Error loading driver info:', error);
+            }
+        }
+
+        async function loadHOSStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/drivers/${currentDriverId}/hos_status/`);
+                const data = await response.json();
+                if (response.ok) {
+                    displayHOSStatus(data);
+                }
+            } catch (error) {
+                console.error('Error loading HOS status:', error);
+            }
+        }
+
+        function displayHOSStatus(data) {
+            const hosStatusDiv = document.getElementById('hos-status');
+            hosStatusDiv.innerHTML = `
+                <div class="hos-metric">
+                    <span class="metric-label">Can Drive:</span>
+                    <span class="metric-value ${data.can_drive ? 'success' : 'danger'}">${data.can_drive ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="hos-metric">
+                    <span class="metric-label">Available Driving Hours:</span>
+                    <span class="metric-value ${data.available_driving_hours < 2 ? 'warning' : ''}">${data.available_driving_hours.toFixed(2)} hours</span>
+                </div>
+                <div class="hos-metric">
+                    <span class="metric-label">Driving Hours Used (Today):</span>
+                    <span class="metric-value">${data.driving_hours_used.toFixed(2)} hours</span>
+                </div>
+                <div class="hos-metric">
+                    <span class="metric-label">On Duty Hours (Today):</span>
+                    <span class="metric-value">${data.on_duty_hours_used.toFixed(2)} hours</span>
+                </div>
+                <div class="hos-metric">
+                    <span class="metric-label">Weekly Hours Used:</span>
+                    <span class="metric-value ${data.weekly_hours_used > 60 ? 'warning' : ''}">${data.weekly_hours_used.toFixed(2)} hours</span>
+                </div>
+                <div class="hos-metric">
+                    <span class="metric-label">Rest Break Required:</span>
+                    <span class="metric-value ${data.rest_break_required ? 'danger' : ''}">${data.rest_break_required ? 'Yes' : 'No'}</span>
+                </div>
+            `;
+        }
+
+        async function loadCurrentTrip() {
+            try {
+                const response = await fetch(`${API_BASE}/trips/`);
+                const data = await response.json();
+                if (response.ok && Array.isArray(data) && data.length > 0) {
+                    // Find the most recent trip for this driver
+                    const myTrips = data.filter(trip => trip.driver === currentDriverId);
+                    if (myTrips.length > 0) {
+                        const currentTrip = myTrips[0];
+                        displayCurrentTrip(currentTrip);
+                    } else {
+                        document.getElementById('current-trip').innerHTML = '<p>No trips found</p>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading current trip:', error);
+            }
+        }
+
+        function displayCurrentTrip(trip) {
+            const currentTripDiv = document.getElementById('current-trip');
+            currentTripDiv.innerHTML = `
+                <h3>Trip ${trip.id}</h3>
+                <p><strong>From:</strong> ${trip.origin_address}</p>
+                <p><strong>To:</strong> ${trip.destination_address}</p>
+                <p><strong>Status:</strong> <span class="trip-status ${trip.status}">${trip.status_display}</span></p>
+                <p><strong>Planned Start:</strong> ${new Date(trip.planned_start_time).toLocaleString()}</p>
+                ${trip.total_distance_miles ? `<p><strong>Distance:</strong> ${trip.total_distance_miles} miles</p>` : ''}
+                ${trip.estimated_duration_hours ? `<p><strong>Duration:</strong> ${trip.estimated_duration_hours} hours</p>` : ''}
+            `;
+        }
+
+        async function updateDutyStatus() {
+            showLoading();
+            try {
+                const status = document.getElementById('duty-status').value;
+                const location = document.getElementById('duty-location').value;
+                const remarks = document.getElementById('duty-remarks').value;
+                
+                if (!location) {
+                    showResponse('duty-response', { error: 'Location is required' }, true);
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE}/drivers/${currentDriverId}/update_duty_status/`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ 
+                        status, 
+                        location, 
+                        remarks 
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('duty-response', data, !response.ok);
+                
+                if (response.ok) {
+                    // Refresh HOS status and current status
+                    await loadHOSStatus();
+                    document.getElementById('current-status').textContent = status.replace('_', ' ').toUpperCase();
+                }
+            } catch (error) {
+                showResponse('duty-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function getMyTrips() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/trips/`);
+                const data = await response.json();
+                if (response.ok && Array.isArray(data)) {
+                    const myTrips = data.filter(trip => trip.driver === currentDriverId);
+                    showResponse('trips-response', myTrips, false);
+                    
+                    // Populate trip ID dropdown
+                    const tripIdSelect = document.getElementById('trip-id');
+                    if (tripIdSelect && myTrips.length > 0) {
+                        tripIdSelect.innerHTML = '<option value="">Select a trip...</option>';
+                        myTrips.forEach(trip => {
+                            const option = document.createElement('option');
+                            option.value = trip.id;
+                            option.textContent = `Trip ${trip.id.substring(0, 8)}... (${trip.status}) - ${trip.origin_address} to ${trip.destination_address}`;
+                            tripIdSelect.appendChild(option);
+                        });
+                    } else if (tripIdSelect) {
+                        tripIdSelect.innerHTML = '<option value="">No trips available</option>';
+                    }
+                } else {
+                    showResponse('trips-response', data, true);
+                }
+            } catch (error) {
+                showResponse('trips-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updateTripStatus() {
+            const tripId = document.getElementById('trip-id').value;
+            const status = document.getElementById('trip-status').value;
+            
+            if (!tripId) {
+                showResponse('trip-update-response', { error: 'Please enter a Trip ID' }, true);
+                return;
+            }
+            
+            showLoading();
+            try {
+                await getCSRFToken();
+                const response = await fetch(`${API_BASE}/trips/${tripId}/`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ status: status })
+                });
+                const data = await response.json();
+                showResponse('trip-update-response', data, !response.ok);
+                
+                if (response.ok) {
+                    // Refresh trips list
+                    await getMyTrips();
+                }
+            } catch (error) {
+                showResponse('trip-update-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function createTrip() {
+            showLoading();
+            try {
+                const tripData = {
+                    driver_id: currentDriverId,
+                    origin_address: document.getElementById('trip-origin').value,
+                    destination_address: document.getElementById('trip-destination').value,
+                    planned_start_time: document.getElementById('trip-start-time').value
+                };
+                
+                if (!tripData.origin_address || !tripData.destination_address || !tripData.planned_start_time) {
+                    showResponse('create-trip-response', { error: 'All fields are required' }, true);
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE}/trips/create_trip/`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(tripData)
+                });
+                
+                const data = await response.json();
+                showResponse('create-trip-response', data, !response.ok);
+                
+                if (response.ok) {
+                    // Refresh trips list
+                    await getMyTrips();
+                    await loadCurrentTrip();
+                }
+            } catch (error) {
+                showResponse('create-trip-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function getMyLogs() {
+            showLoading();
+            try {
+                const response = await fetch(`${API_BASE}/daily-logs/`);
+                const data = await response.json();
+                if (response.ok && Array.isArray(data)) {
+                    const myLogs = data.filter(log => log.driver === currentDriverId);
+                    showResponse('logs-response', myLogs, false);
+                } else {
+                    showResponse('logs-response', data, true);
+                }
+            } catch (error) {
+                showResponse('logs-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function generatePDF() {
+            showLoading();
+            try {
+                const date = document.getElementById('pdf-date').value;
+                
+                const response = await fetch(`${API_BASE}/daily-logs/generate_pdf/`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ 
+                        driver_id: currentDriverId, 
+                        date 
+                    })
+                });
+                
+                const data = await response.json();
+                showResponse('pdf-response', data, !response.ok);
+            } catch (error) {
+                showResponse('pdf-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function calculateRoute() {
+            showLoading();
+            try {
+                const origin = document.getElementById('route-origin').value;
+                const destination = document.getElementById('route-destination').value;
+                
+                const response = await fetch(`${API_BASE}/route-calculation/`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ origin, destination })
+                });
+                
+                const data = await response.json();
+                showResponse('route-response', data, !response.ok);
+            } catch (error) {
+                showResponse('route-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function geocodeAddress() {
+            showLoading();
+            try {
+                const address = document.getElementById('geocode-address').value;
+                
+                const response = await fetch(`${API_BASE}/geocode/`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ address })
+                });
+                
+                const data = await response.json();
+                showResponse('geocode-response', data, !response.ok);
+            } catch (error) {
+                showResponse('geocode-response', { error: error.message }, true);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Initialize with current date/time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('trip-start-time').value = localDateTime;
+            document.getElementById('pdf-date').value = now.toISOString().slice(0, 10);
+        });
+    </script>
+</body>
+</html>

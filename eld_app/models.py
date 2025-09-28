@@ -13,6 +13,8 @@ class Driver(models.Model):
     """Driver model for HOS tracking"""
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     driver_id = models.CharField(max_length=50, unique=True)
+    license_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    license_state = models.CharField(max_length=2, default='CA')
     home_terminal_address = models.TextField()
     carrier_name = models.CharField(max_length=200)
     carrier_address = models.TextField()

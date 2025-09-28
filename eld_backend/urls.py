@@ -29,6 +29,7 @@ urlpatterns = [
     path('', api_root, name='api_root'),
     path('admin/', admin.site.urls),
     path('api/', include('eld_app.urls')),
+    path('test-ui/', include('eld_app.urls')),  # Add test-ui route
     path('favicon.ico', lambda request: HttpResponse(status=204), name='favicon'),
 ]
 

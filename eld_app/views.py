@@ -94,7 +94,7 @@ class DriverViewSet(viewsets.ModelViewSet):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='update_duty_status')
     def update_duty_status(self, request, pk=None):
         """Update driver's duty status (alias for change_duty_status)"""
         return self.change_duty_status(request, pk)
@@ -358,7 +358,7 @@ class RouteCalculationView(APIView):
             
             if not origin_coords or not destination_coords:
                 return Response(
-                    {'error': 'Could not geocode one or both addresses'}, 
+                    {'error': 'Could not geocode one or both addresses. Please check the address format and try again.'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -372,10 +372,12 @@ class RouteCalculationView(APIView):
                 # Add the original addresses to the result
                 route['origin_address'] = serializer.validated_data['origin']
                 route['destination_address'] = serializer.validated_data['destination']
+                route['origin_coords'] = origin_coords
+                route['destination_coords'] = destination_coords
                 return Response(route)
             else:
                 return Response(
-                    {'error': 'Could not calculate route'}, 
+                    {'error': 'Could not calculate route. Using fallback straight-line route.'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
         

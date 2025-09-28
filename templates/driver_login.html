@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Login - ELD System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .links {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: 500;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        .demo-credentials {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .demo-credentials h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .demo-credentials p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🚛</div>
+        <h1>Driver Login</h1>
+        <p class="subtitle">Access your ELD dashboard</p>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="driverId">Driver ID:</label>
+                <input type="number" id="driverId" placeholder="Enter your driver ID" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="licenseNumber">License Number:</label>
+                <input type="text" id="licenseNumber" placeholder="Enter your license number" required>
+            </div>
+            
+            <button type="submit" class="btn" id="loginBtn">Login</button>
+            
+            <div class="loading" id="loading">Logging in...</div>
+            <div class="error" id="error"></div>
+            <div class="success" id="success"></div>
+        </form>
+
+        <div class="demo-credentials">
+            <h3>Demo Credentials:</h3>
+            <p><strong>Driver ID:</strong> 1</p>
+            <p><strong>License Number:</strong> TEST123</p>
+            <p><em>Or create a new driver in the admin panel</em></p>
+        </div>
+        
+        <div class="links">
+            <a href="/api/admin-login/" target="_blank">Admin Login</a>
+            <a href="/api/test-ui/" target="_blank">Test UI</a>
+            <a href="/api/" target="_blank">API Root</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        let csrfToken = null;
+
+        async function getCSRFToken() {
+            try {
+                const response = await fetch(`${API_BASE}/csrf-token/`);
+                const data = await response.json();
+                if (response.ok) {
+                    csrfToken = data.csrf_token;
+                }
+            } catch (error) {
+                console.error('Could not get CSRF token:', error);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('error').textContent = message;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            document.getElementById('success').textContent = message;
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideMessages() {
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loginBtn').disabled = true;
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loginBtn').disabled = false;
+        }
+
+        async function loginDriver() {
+            const driverId = document.getElementById('driverId').value;
+            const licenseNumber = document.getElementById('licenseNumber').value;
+
+            if (!driverId || !licenseNumber) {
+                showError('Please enter both Driver ID and License Number');
+                return;
+            }
+
+            showLoading();
+            hideMessages();
+
+            try {
+                await getCSRFToken();
+                
+                const response = await fetch(`${API_BASE}/driver/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        driver_id: parseInt(driverId),
+                        license_number: licenseNumber
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess(`Welcome, ${data.driver.name}! Redirecting to dashboard...`);
+                    
+                    // Store driver info in localStorage
+                    localStorage.setItem('driverInfo', JSON.stringify(data.driver));
+                    
+                    // Redirect to driver UI after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/api/driver-ui/';
+                    }, 2000);
+                } else {
+                    showError(data.error || 'Login failed');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            loginDriver();
+        });
+
+        // Auto-fill demo credentials on click
+        document.querySelector('.demo-credentials').addEventListener('click', function() {
+            document.getElementById('driverId').value = '1';
+            document.getElementById('licenseNumber').value = 'TEST123';
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', getCSRFToken);
+    </script>
+</body>
+</html>
