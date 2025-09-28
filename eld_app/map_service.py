@@ -124,9 +124,22 @@ class OpenStreetMapService:
         
         # Normalize address for lookup
         normalized_address = address.lower().strip()
+        # Remove extra spaces and normalize
+        normalized_address = ' '.join(normalized_address.split())
+        
         for key, coords in fallback_addresses.items():
             if key in normalized_address or normalized_address in key:
                 return coords
+            
+            # Also check for partial matches
+            if 'amphitheatre' in normalized_address and 'mountain' in normalized_address:
+                return fallback_addresses['1600 amphitheatre parkway mountainview california']
+            if 'newark' in normalized_address:
+                return fallback_addresses['newark nj']
+            if 'richmond' in normalized_address:
+                return fallback_addresses['richmond va']
+            if 'santa clara' in normalized_address:
+                return fallback_addresses['santa clara ca']
         
         return None
     

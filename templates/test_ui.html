@@ -334,11 +334,15 @@
                             <div class="form-group">
                                 <label>Status:</label>
                                 <select id="duty-status">
-                                    <option value="OFF_DUTY">Off Duty</option>
-                                    <option value="SLEEPER_BERTH">Sleeper Berth</option>
-                                    <option value="DRIVING">Driving</option>
-                                    <option value="ON_DUTY_NOT_DRIVING">On Duty (Not Driving)</option>
+                                    <option value="off_duty">Off Duty</option>
+                                    <option value="sleeper_berth">Sleeper Berth</option>
+                                    <option value="driving">Driving</option>
+                                    <option value="on_duty_not_driving">On Duty (Not Driving)</option>
                                 </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Location:</label>
+                                <input type="text" id="duty-location" placeholder="Current location" value="Terminal">
                             </div>
                             <button class="btn btn-warning" onclick="updateDutyStatus()">Update Status</button>
                             <div id="duty-response" class="response"></div>
@@ -666,11 +670,17 @@
                     return;
                 }
                 const status = document.getElementById('duty-status').value;
+                const location = document.getElementById('duty-location').value;
+                
+                if (!location) {
+                    showResponse('duty-response', { error: 'Location is required' }, true);
+                    return;
+                }
                 
                 const response = await fetch(`${API_BASE}/drivers/${driverId}/update_duty_status/`, {
                     method: 'POST',
                     headers: getHeaders(),
-                    body: JSON.stringify({ status })
+                    body: JSON.stringify({ status, location })
                 });
                 
                 const data = await response.json();
